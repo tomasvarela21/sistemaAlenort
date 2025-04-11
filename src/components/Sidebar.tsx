@@ -175,7 +175,7 @@ export default function Sidebar({ role }: { role: Role | null }) {
                   Salir
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="bg-white">
+              <AlertDialogContent className="bg-black">
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                   <AlertDialogDescription>

@@ -149,8 +149,14 @@ export default function VentasPage() {
 
         ventasPorTransaccion.forEach((productos, transaccionId) => {
           if (productos.length > 0) {
+            // Verificar si algún producto de la transacción está marcado como entregado
+            const entregado = productos.some((p) => p.estado === "entregada")
+
             const primerProducto = productos[0]
             const totalTransaccion = productos.reduce((sum, venta) => sum + venta.total, 0)
+
+            // Si algún producto está entregado, marcar toda la transacción como completada
+            const estadoTransaccion = entregado ? "completada" : primerProducto.estado
 
             agrupadas.push({
               transaccionId,
@@ -160,7 +166,7 @@ export default function VentasPage() {
               total: totalTransaccion,
               productos,
               direccionCliente: primerProducto.direccionCliente,
-              estado: primerProducto.estado,
+              estado: estadoTransaccion,
               fechaEntrega: primerProducto.fechaEntrega,
               horarioEntrega: primerProducto.horarioEntrega,
               repartidor: primerProducto.repartidor,
@@ -969,22 +975,26 @@ export default function VentasPage() {
                       <TableCell className="text-center">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            venta.estado === "completada"
+                            venta.estado === "completada" || venta.estado === "entregada"
                               ? "bg-green-100 text-green-800"
                               : venta.estado === "pendiente_programacion"
                                 ? "bg-amber-100 text-amber-800"
                                 : venta.estado === "programada"
                                   ? "bg-blue-100 text-blue-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  : venta.estado === "en_reparto"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {venta.estado === "completada"
+                          {venta.estado === "completada" || venta.estado === "entregada"
                             ? "Completada"
                             : venta.estado === "pendiente_programacion"
                               ? "Pendiente de programación"
                               : venta.estado === "programada"
                                 ? "Programada"
-                                : "Pendiente"}
+                                : venta.estado === "en_reparto"
+                                  ? "En reparto"
+                                  : "Pendiente"}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
@@ -1050,4 +1060,3 @@ export default function VentasPage() {
     </div>
   )
 }
-

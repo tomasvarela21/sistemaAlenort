@@ -225,10 +225,15 @@ export default function RepartosPage() {
 
   // Marcar como entregado
   const marcarComoEntregado = async (venta: VentaAgrupada) => {
-    // Verificar si la fecha actual coincide con la fecha de entrega programada
-    const fechaActual = new Date().toISOString().split("T")[0]
+    // Verificar si la fecha actual es igual o posterior a la fecha de entrega programada
+    const fechaActual = new Date()
+    const fechaEntrega = new Date(venta.fechaEntrega || "")
 
-    if (venta.fechaEntrega !== fechaActual) {
+    // Resetear las horas, minutos y segundos para comparar solo las fechas
+    fechaActual.setHours(0, 0, 0, 0)
+    fechaEntrega.setHours(0, 0, 0, 0)
+
+    if (fechaActual < fechaEntrega) {
       alert("No se puede marcar como entregado. La entrega está programada para el " + venta.fechaEntrega)
       return
     }
@@ -591,4 +596,3 @@ export default function RepartosPage() {
     </div>
   )
 }
-
