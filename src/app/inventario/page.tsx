@@ -1,6 +1,3 @@
-
-
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -10,25 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { PackageOpen, Warehouse } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import  Image from "next/image";
+import Image from "next/image"
 
-
-import rebosados from "../inventario/imagenes/rebosados.jpg";
-import pollo from "../inventario/imagenes/pollo.jpg";
-import pescado from "../inventario/imagenes/pescado.jpg";
-import mariscos from "../inventario/imagenes/mariscos.jpg";
-import papas from "../inventario/imagenes/papas.jpg";
-import otros from "../inventario/imagenes/otros.jpg";
-
+// Eliminamos las importaciones de imágenes y usamos rutas directas a la carpeta public
 const CATEGORIAS = [
-  { id: "rebosados", nombre: "Rebosados", imagen: rebosados },
-  { id: "pollo", nombre: "Pollo", imagen: pollo },
-  { id: "pescado", nombre: "Pescado", imagen: pescado },
-  { id: "mariscos", nombre: "Mariscos", imagen: mariscos },
-  { id: "papas", nombre: "Papas", imagen: papas },
-  { id: "otros productos", nombre: "Otros Productos", imagen: otros},
-];
-
+  { id: "rebosados", nombre: "Rebosados", imagen: "/images/inventario/rebosados.jpg" },
+  { id: "pollo", nombre: "Pollo", imagen: "/images/inventario/pollo.jpg" },
+  { id: "pescado", nombre: "Pescado", imagen: "/images/inventario/pescado.jpg" },
+  { id: "mariscos", nombre: "Mariscos", imagen: "/images/inventario/mariscos.jpg" },
+  { id: "papas", nombre: "Papas", imagen: "/images/inventario/papas.jpg" },
+  { id: "otros productos", nombre: "Otros Productos", imagen: "/images/inventario/otros.jpg" },
+]
 
 interface Producto {
   id: number
@@ -144,15 +133,15 @@ export default function InventarioPage() {
                 <Image
                   src={categoria.imagen || "/placeholder.svg"}
                   alt={categoria.nombre}
-                  layout="fill" // Hace que la imagen se adapte al div contenedor
-                  objectFit="cover" // Asegura que la imagen cubra todo el espacio sin distorsionarse
+                  fill
+                  className="object-cover"
                 />
               </div>
               <h3 className="text-xl font-semibold">{categoria.nombre}</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 {productos.filter((p) => p.categoria === categoria.id).length} productos
-             </p>
-           </CardContent>;
+              </p>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -182,25 +171,25 @@ export default function InventarioPage() {
                   key={producto.id}
                   className="flex justify-between items-center p-4 bg-white border rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
                 >
-                 <div className="flex items-center gap-4">
-                     {producto.imagenUrl ? (
+                  <div className="flex items-center gap-4">
+                    {producto.imagenUrl ? (
                       <div className="w-16 h-16 relative rounded-md overflow-hidden">
                         <Image
-                          src={producto.imagenUrl} // No necesitas el placeholder aquí, Next.js maneja eso
+                          src={producto.imagenUrl || "/placeholder.svg"}
                           alt={producto.nombre}
-                          width={64} // Equivalente a w-16 en Tailwind
-                          height={64} // Equivalente a h-16 en Tailwind
+                          width={64}
+                          height={64}
                           className="object-cover"
                         />
                       </div>
-                   ) : (
+                    ) : (
                       <PackageOpen className="w-10 h-10 text-primary/70" />
-                   )}
-                   <div>
+                    )}
+                    <div>
                       <p className="font-medium text-gray-800">{producto.nombre}</p>
                       <p className="text-gray-600 text-sm">{producto.descripcion}</p>
-                   </div>
-                 </div>;
+                    </div>
+                  </div>
                   <div className="flex items-center gap-4">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStockColor(producto.cantidad)}`}>
                       {producto.cantidad} unidades
@@ -216,4 +205,3 @@ export default function InventarioPage() {
     </div>
   )
 }
-
