@@ -1,13 +1,18 @@
-"use client";
-import { Users, Calendar, BarChart2, DollarSign, Gift, BookOpen, LayoutDashboard, Clipboard, LogOut, ShoppingBag, Truck, Package, ClipboardList } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebaseConfig";
-import { useState } from "react";
+"use client"
+import { Users, BarChart2, LogOut, ShoppingBag, Truck, Package, ClipboardList } from "lucide-react"
+import type React from "react"
+
+// Se eliminaron las importaciones no utilizadas: Calendar, DollarSign, Gift, BookOpen, LayoutDashboard, Clipboard
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import Link from "next/link"
+import Image from "next/image" // Importamos Image de Next.js
+import { usePathname } from "next/navigation"
+import { signOut } from "firebase/auth"
+import { auth } from "@/lib/firebaseConfig"
+import { useState } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +23,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
 
-type Role = "ADMIN" | "EncargadoClientes" | "Logistica";
+type Role = "ADMIN" | "EncargadoClientes" | "Logistica"
 
 const sidebarItems: Record<Role, { href: string; icon: React.ElementType; label: string }[]> = {
   ADMIN: [
@@ -42,20 +47,19 @@ const sidebarItems: Record<Role, { href: string; icon: React.ElementType; label:
     { href: "/clientes", icon: Users, label: "Clientes" },
     { href: "/repartos", icon: Truck, label: "Repartos" },
     { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
-    
   ],
-};
+}
 
 export default function Sidebar({ role }: { role: Role | null }) {
-  const pathname = usePathname();
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const pathname = usePathname()
+  const [isAlertOpen, setIsAlertOpen] = useState(false)
 
   // Verificamos que el role sea válido antes de renderizar
-  if (!role || !(role in sidebarItems)) return null;
+  if (!role || !(role in sidebarItems)) return null
 
   const handleLogout = async () => {
-    await signOut(auth); // Cierra sesión en Firebase
-  };
+    await signOut(auth) // Cierra sesión en Firebase
+  }
 
   return (
     <>
@@ -71,38 +75,41 @@ export default function Sidebar({ role }: { role: Role | null }) {
             <CardContent className="pt-6 px-4 flex flex-col h-full">
               <div className="text-center mb-6">
                 <Link href="/">
-                  <img
+                  {/* Reemplazamos img por Image */}
+                  <Image
                     src="/alenort logo.png"
                     alt="Alenort Logo"
+                    width={128} // Ancho adecuado para la imagen
+                    height={128} // Alto adecuado para la imagen
                     className="h-32 mx-auto object-contain"
                   />
                 </Link>
               </div>
-              
+
               <nav className="flex-grow space-y-2">
                 {sidebarItems[role].map((item) => {
-                  const Icon = item.icon;
+                  const Icon = item.icon
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={`flex items-center p-2 rounded-md transition duration-200 ${
-                        pathname === item.href 
-                          ? "bg-primary text-primary-foreground" 
+                        pathname === item.href
+                          ? "bg-primary text-primary-foreground"
                           : "hover:bg-accent hover:text-accent-foreground"
                       }`}
                     >
                       <Icon className="mr-3" size={18} />
                       <span className="text-sm">{item.label}</span>
                     </Link>
-                  );
+                  )
                 })}
               </nav>
-              
+
               <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     className="w-full mt-4 flex items-center justify-center"
                     onClick={() => setIsAlertOpen(true)}
                   >
@@ -113,15 +120,11 @@ export default function Sidebar({ role }: { role: Role | null }) {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción cerrará tu sesión. ¿Quieres continuar?
-                    </AlertDialogDescription>
+                    <AlertDialogDescription>Esta acción cerrará tu sesión. ¿Quieres continuar?</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleLogout}>
-                      Continuar
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={handleLogout}>Continuar</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -136,38 +139,41 @@ export default function Sidebar({ role }: { role: Role | null }) {
           <CardContent className="pt-6 px-4 flex flex-col h-full">
             <div className="text-center mb-6">
               <Link href="/">
-                <img
+                {/* Reemplazamos img por Image */}
+                <Image
                   src="/alenort logo.png"
                   alt="Alenort Logo"
+                  width={192} // Ancho adecuado para la imagen
+                  height={192} // Alto adecuado para la imagen
                   className="h-48 mx-auto object-contain"
                 />
               </Link>
             </div>
-            
+
             <nav className="flex-grow space-y-2">
               {sidebarItems[role].map((item) => {
-                const Icon = item.icon;
+                const Icon = item.icon
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={`flex items-center p-2 rounded-md transition duration-200 ${
-                      pathname === item.href 
-                        ? "bg-primary text-primary-foreground" 
+                      pathname === item.href
+                        ? "bg-primary text-primary-foreground"
                         : "hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
                     <Icon className="mr-3" size={18} />
                     <span className="text-sm">{item.label}</span>
                   </Link>
-                );
+                )
               })}
             </nav>
-            
+
             <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   className="w-full mt-4 flex items-center justify-center"
                   onClick={() => setIsAlertOpen(true)}
                 >
@@ -178,15 +184,11 @@ export default function Sidebar({ role }: { role: Role | null }) {
               <AlertDialogContent className="bg-black">
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción cerrará tu sesión. ¿Quieres continuar?
-                  </AlertDialogDescription>
+                  <AlertDialogDescription>Esta acción cerrará tu sesión. ¿Quieres continuar?</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleLogout}>
-                    Continuar
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={handleLogout}>Continuar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -194,5 +196,5 @@ export default function Sidebar({ role }: { role: Role | null }) {
         </Card>
       </aside>
     </>
-  );
+  )
 }
