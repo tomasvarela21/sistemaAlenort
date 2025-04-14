@@ -38,7 +38,7 @@ interface Producto {
 
 interface StockSettings {
   lowThreshold: number
-  mediumThreshold: number
+  mediumThreshold: number 
   highThreshold: number
 }
 
@@ -81,7 +81,7 @@ export default function ProductosPage() {
       }
     }
     loadStockSettings()
-  }, [])
+  }, [stockSettings])
 
   // Load products from Firebase
   useEffect(() => {
@@ -97,6 +97,7 @@ export default function ProductosPage() {
     obtenerProductos()
   }, [])
 
+  // Rest of the code remains the same...
   // Function to get stock level color
   const getStockLevelColor = (cantidad: number, thresholds?: { low: number; medium: number; high: number }) => {
     const low = thresholds?.low || stockSettings.lowThreshold
@@ -328,7 +329,7 @@ export default function ProductosPage() {
                     <SelectItem value="pollo">Pollo</SelectItem>
                     <SelectItem value="pescado">Pescado</SelectItem>
                     <SelectItem value="mariscos">Mariscos</SelectItem>
-                    <SelectItem value= "papas"> Papas </SelectItem>
+                    <SelectItem value="papas"> Papas </SelectItem>
                     <SelectItem value="otros productos">Otros Productos</SelectItem>
                   </SelectContent>
                 </Select>

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firebaseConfig"; // O la ruta de tu archivo de configuración
 import { collection, query, getDocs } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Package, Users, Calendar, TrendingUp, Activity, ShoppingCart, Clock } from "lucide-react";
+import { DollarSign, Package, Users, Calendar, Activity, ShoppingCart} from "lucide-react";
 
 // Funciones para obtener los datos de Firebase
 const getTotalVentas = async () => {

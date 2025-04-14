@@ -50,6 +50,7 @@ interface Repartidor {
 }
 
 export default function RepartosPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ventas, setVentas] = useState<Venta[]>([])
   const [ventasAgrupadas, setVentasAgrupadas] = useState<VentaAgrupada[]>([])
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaAgrupada | null>(null)

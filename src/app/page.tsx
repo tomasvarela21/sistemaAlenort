@@ -1,48 +1,56 @@
-"use client";
-import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
-import {
-  AlertCircle,
-  ShieldCheck,
-  Truck,
-  Users,
-  Package,
-  BarChart2,
-  ShoppingCart,
-  Clipboard,
-} from "lucide-react";
-import React from "react";
+"use client"
+import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { useRouter } from "next/navigation"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebaseConfig"
+import { AlertCircle, ShieldCheck, Truck, Users, Package, BarChart2, ShoppingCart, Clipboard } from "lucide-react"
+import React from "react"
+
+interface ButtonConfig {
+  label: string
+  path: string
+  icon: React.ElementType
+}
+
+interface RoleConfig {
+  color: string
+  icon: React.ElementType
+  title: string
+  buttons: ButtonConfig[]
+}
+
+interface RoleConfigs {
+  [key: string]: RoleConfig
+}
 
 export default function Inicio() {
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    const auth = getAuth();
+    const auth = getAuth()
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
+          const userDoc = await getDoc(doc(db, "users", user.uid))
           if (userDoc.exists()) {
-            setUserRole(userDoc.data().role);
+            setUserRole(userDoc.data().role)
           } else {
-            setError("El documento del usuario no existe en Firestore.");
+            setError("El documento del usuario no existe en Firestore.")
           }
         } catch (err) {
-          setError("Error: no tienes permisos para acceder a esta información.");
+          setError("Error: no tienes permisos para acceder a esta información.")
         }
       } else {
-        router.push("/login");
+        router.push("/login")
       }
-    });
+    })
 
-    return () => unsubscribe();
-  }, [router]);
+    return () => unsubscribe()
+  }, [router])
 
   if (error) {
     return (
@@ -52,10 +60,10 @@ export default function Inicio() {
           <p className="text-red-600 font-semibold">{error}</p>
         </div>
       </div>
-    );
+    )
   }
 
-  const roleConfigs: Record<string, any> = {
+  const roleConfigs: RoleConfigs = {
     ADMIN: {
       color: "green",
       icon: ShieldCheck,
@@ -86,15 +94,15 @@ export default function Inicio() {
         { label: "Inventario", path: "/inventario", icon: Clipboard },
       ],
     },
-  };
+  }
 
-  const roleConfig = roleConfigs[userRole || ""] || null;
+  const roleConfig = roleConfigs[userRole || ""] || null
 
   const colorClasses: Record<string, string> = {
     green: "text-green-600 bg-green-600 hover:bg-green-700",
     purple: "text-purple-600 bg-purple-600 hover:bg-purple-700",
     yellow: "text-yellow-600 bg-yellow-600 hover:bg-yellow-700",
-  };
+  }
 
   return (
     <div className="flex items-center justify-center p-4">
@@ -103,9 +111,7 @@ export default function Inicio() {
           <h1 className="text-3xl font-bold text-center">
             Bienvenido, <span>{userRole || "Cargando..."}</span>
           </h1>
-          <p className="text-center opacity-80 mt-2">
-            Selecciona una de las siguientes opciones según tu rol
-          </p>
+          <p className="text-center opacity-80 mt-2">Selecciona una de las siguientes opciones según tu rol</p>
         </div>
 
         {roleConfig ? (
@@ -121,7 +127,7 @@ export default function Inicio() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {roleConfig.buttons.map((btn: any, index: number) => (
+              {roleConfig.buttons.map((btn, index) => (
                 <Button
                   key={index}
                   onClick={() => router.push(btn.path)}
@@ -140,5 +146,5 @@ export default function Inicio() {
         )}
       </div>
     </div>
-  );
+  )
 }
