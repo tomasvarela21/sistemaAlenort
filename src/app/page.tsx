@@ -1,4 +1,5 @@
 "use client"
+
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
@@ -8,6 +9,7 @@ import { db } from "@/lib/firebaseConfig"
 import { AlertCircle, ShieldCheck, Truck, Users, Package, BarChart2, ShoppingCart, Clipboard } from "lucide-react"
 import React from "react"
 
+// Define proper types for role configurations
 interface ButtonConfig {
   label: string
   path: string
@@ -21,9 +23,7 @@ interface RoleConfig {
   buttons: ButtonConfig[]
 }
 
-interface RoleConfigs {
-  [key: string]: RoleConfig
-}
+type RoleConfigs = Record<string, RoleConfig>
 
 export default function Inicio() {
   const [userRole, setUserRole] = useState<string | null>(null)

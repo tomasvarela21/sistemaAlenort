@@ -2,13 +2,11 @@
 import { Users, BarChart2, LogOut, ShoppingBag, Truck, Package, ClipboardList } from "lucide-react"
 import type React from "react"
 
-// Se eliminaron las importaciones no utilizadas: Calendar, DollarSign, Gift, BookOpen, LayoutDashboard, Clipboard
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import Link from "next/link"
-import Image from "next/image" // Importamos Image de Next.js
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "firebase/auth"
 import { auth } from "@/lib/firebaseConfig"
@@ -75,12 +73,11 @@ export default function Sidebar({ role }: { role: Role | null }) {
             <CardContent className="pt-6 px-4 flex flex-col h-full">
               <div className="text-center mb-6">
                 <Link href="/">
-                  {/* Reemplazamos img por Image */}
                   <Image
                     src="/alenort logo.png"
                     alt="Alenort Logo"
-                    width={128} // Ancho adecuado para la imagen
-                    height={128} // Alto adecuado para la imagen
+                    width={128}
+                    height={128}
                     className="h-32 mx-auto object-contain"
                   />
                 </Link>
@@ -139,12 +136,11 @@ export default function Sidebar({ role }: { role: Role | null }) {
           <CardContent className="pt-6 px-4 flex flex-col h-full">
             <div className="text-center mb-6">
               <Link href="/">
-                {/* Reemplazamos img por Image */}
                 <Image
                   src="/alenort logo.png"
                   alt="Alenort Logo"
-                  width={192} // Ancho adecuado para la imagen
-                  height={192} // Alto adecuado para la imagen
+                  width={192}
+                  height={192}
                   className="h-48 mx-auto object-contain"
                 />
               </Link>
