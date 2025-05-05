@@ -202,18 +202,36 @@ export default function ClientesPage() {
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Clientes</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              limpiarFormulario()
-              setActiveTab("nuevo")
-            }}
-            className="flex items-center gap-2"
-          >
-            <UserPlusIcon className="h-4 w-4" />
-            Nuevo Cliente
-          </Button>
+        <div className="w-64">
+          <div className="relative w-full">
+            <Input
+              placeholder="Buscar cliente..."
+              className="w-full pr-8"
+              onChange={(e) => {
+                const searchTerm = e.target.value.toLowerCase()
+                if (searchTerm === "") {
+                  cargarClientes()
+                } else {
+                  const clientesFiltrados = clientes.filter(
+                    (cliente) =>
+                      cliente.nombreCliente.toLowerCase().includes(searchTerm) ||
+                      cliente.direccionCliente.toLowerCase().includes(searchTerm) ||
+                      (cliente.emailCliente && cliente.emailCliente.toLowerCase().includes(searchTerm)) ||
+                      (cliente.telefonoCliente && cliente.telefonoCliente.includes(searchTerm)),
+                  )
+                  setClientes(clientesFiltrados)
+                }
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full"
+              onClick={() => cargarClientes()}
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

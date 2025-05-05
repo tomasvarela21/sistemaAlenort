@@ -108,14 +108,20 @@ export default function InventarioPage() {
 
   // Filtrar productos por categoría y búsqueda
   useEffect(() => {
-    let filtrados = productos.filter((producto) => producto.categoria === categoriaActiva)
+    let filtrados = productos; // Inicialmente, mostramos todos los productos
 
+    // Filtrar por búsqueda (ahora en todas las categorías)
     if (busqueda) {
-      filtrados = filtrados.filter((producto) => producto.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+      filtrados = filtrados.filter((producto) =>
+        producto.nombre.toLowerCase().includes(busqueda.toLowerCase())
+      );
+    } else {
+      // Si no hay búsqueda, filtrar por la categoría activa
+      filtrados = filtrados.filter((producto) => producto.categoria === categoriaActiva);
     }
 
-    setProductosFiltrados(filtrados)
-  }, [categoriaActiva, productos, busqueda])
+    setProductosFiltrados(filtrados);
+  }, [categoriaActiva, productos, busqueda]);
 
   // Function to get stock level color (copiado de ProductosPage)
   const getStockLevelColor = (cantidad: number, thresholds?: { low: number; medium: number; high: number }) => {
@@ -158,28 +164,20 @@ export default function InventarioPage() {
           <h1 className="text-2xl font-bold">Inventario</h1>
           <p className="text-muted-foreground">Gestiona el stock de productos por categoría</p>
         </div>
-        <div>
-          <Input
-            placeholder="Buscar producto..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full md:w-64"
-          />
-        </div>
       </div>
 
       {/* Vista de categorías en tarjetas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8">
         {CATEGORIAS.map((categoria) => (
           <Card
             key={categoria.id}
             className={`cursor-pointer transition-all hover:shadow-md ${
               categoriaActiva === categoria.id ? "border-primary border-2" : ""
-            }`}
+            } h-auto min-h-[220px]`} // Aumentamos un poco la altura mínima
             onClick={() => setCategoriaActiva(categoria.id)}
           >
-            <CardContent className="p-4 flex flex-col items-center">
-              <div className="w-full h-40 relative mb-4 rounded-md overflow-hidden">
+            <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+              <div className="w-full h-32 relative mb-4 rounded-md overflow-hidden"> {/* Aumentamos la altura de la imagen */}
                 <Image
                   src={categoria.imagen || "/placeholder.svg"}
                   alt={categoria.nombre}
@@ -187,13 +185,23 @@ export default function InventarioPage() {
                   className="object-cover"
                 />
               </div>
-              <h3 className="text-xl font-semibold">{categoria.nombre}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h3 className="text-xl font-semibold text-center">{categoria.nombre}</h3>
+              <p className="text-sm text-muted-foreground mt-1 text-center">
                 {productos.filter((p) => p.categoria === categoria.id).length} productos
               </p>
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Barra de búsqueda debajo de las tarjetas */}
+      <div className="mb-6">
+        <Input
+          placeholder="Buscar producto..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="w-full md:w-64"
+        />
       </div>
 
       {/* Lista de productos por categoría */}
@@ -212,7 +220,7 @@ export default function InventarioPage() {
           ) : productosFiltrados.length === 0 ? (
             <Alert variant="default" className="bg-gray-50">
               <PackageOpen className="h-4 w-4" />
-              <AlertDescription className="ml-2">No hay productos en esta categoría</AlertDescription>
+              <AlertDescription className="ml-2">No hay productos que coincidan con tu búsqueda en esta categoría</AlertDescription>
             </Alert>
           ) : (
             <div className="grid gap-4">

@@ -4,13 +4,25 @@ import React from "react"
 
 import { useState, useEffect } from "react"
 import { db } from "@/lib/firebaseConfig"
-import { collection, getDocs, updateDoc, doc, query, where, getDoc, increment, setDoc } from "firebase/firestore"
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  query,
+  where,
+  getDoc,
+  increment,
+  setDoc,
+  onSnapshot,
+} from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import {
   ShoppingCart,
   Users,
@@ -18,8 +30,6 @@ import {
   DollarSign,
   AlertCircle,
   Trash2,
-  Plus,
-  Minus,
   ChevronDown,
   ChevronUp,
   FileText,
@@ -96,19 +106,25 @@ interface VentaAgrupada {
   repartidor?: string
 }
 
+const ESTADOS = {
+  PENDIENTE_PROGRAMACION: "pendiente_programacion",
+  PROGRAMADA: "programada",
+  EN_REPARTO: "en_reparto",
+  COMPLETADA: "completada",
+} as const
+
 export default function VentasPage() {
   // Modificamos estas líneas para evitar los errores de ESLint
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [ventas, setVentas] = useState<Venta[]>([])
   const [ventasAgrupadas, setVentasAgrupadas] = useState<VentaAgrupada[]>([])
   const [cliente, setCliente] = useState<string>("")
   const [producto, setProducto] = useState<string>("")
-  const [cantidad, setCantidad] = useState<number>(0)
+  const [cantidad, setCantidad] = useState<number | "">(1)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [productosDisponibles, setProductosDisponibles] = useState<Producto[]>([])
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [vendedor, setVendedor] = useState<string>("")
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [fecha, setFecha] = useState<string>(new Date().toLocaleDateString())
   const [precioProducto, setPrecioProducto] = useState<number>(0)
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -132,54 +148,58 @@ export default function VentasPage() {
   useEffect(() => {
     const obtenerVentas = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "Ventas"))
-        const ventasObtenidas: Venta[] = querySnapshot.docs.map((doc) => doc.data() as Venta)
-        setVentas(ventasObtenidas)
+        // Configurar listener en tiempo real
+        const unsubscribe = onSnapshot(collection(db, "Ventas"), (querySnapshot) => {
+          const ventasObtenidas: Venta[] = querySnapshot.docs.map((doc) => doc.data() as Venta)
+          setVentas(ventasObtenidas)
 
-        // Agrupar ventas por transaccionId
-        const ventasPorTransaccion = new Map<number, Venta[]>()
+          // Agrupar ventas por transaccionId
+          const ventasPorTransaccion = new Map<number, Venta[]>()
 
-        ventasObtenidas.forEach((venta) => {
-          const transaccionId = venta.transaccionId || venta.id
-          if (!ventasPorTransaccion.has(transaccionId)) {
-            ventasPorTransaccion.set(transaccionId, [])
-          }
-          ventasPorTransaccion.get(transaccionId)?.push(venta)
+          ventasObtenidas.forEach((venta) => {
+            const transaccionId = venta.transaccionId || venta.id
+            if (!ventasPorTransaccion.has(transaccionId)) {
+              ventasPorTransaccion.set(transaccionId, [])
+            }
+            ventasPorTransaccion.get(transaccionId)?.push(venta)
+          })
+
+          // Crear array de ventas agrupadas
+          const agrupadas: VentaAgrupada[] = []
+
+          ventasPorTransaccion.forEach((productos, transaccionId) => {
+            if (productos.length > 0) {
+              // Verificar si algún producto de la transacción está marcado como entregado
+              const entregado = productos.some((p) => p.estado === "entregada")
+
+              const primerProducto = productos[0]
+              const totalTransaccion = productos.reduce((sum, venta) => sum + venta.total, 0)
+
+              // Si algún producto está entregado, marcar toda la transacción como completada
+              const estadoTransaccion = entregado ? "completada" : primerProducto.estado
+
+              agrupadas.push({
+                transaccionId,
+                cliente: primerProducto.cliente,
+                vendedor: primerProducto.vendedor,
+                fecha: primerProducto.fecha,
+                total: totalTransaccion,
+                productos,
+                direccionCliente: primerProducto.direccionCliente,
+                estado: estadoTransaccion,
+                fechaEntrega: primerProducto.fechaEntrega,
+                horarioEntrega: primerProducto.horarioEntrega,
+                repartidor: primerProducto.repartidor,
+              })
+            }
+          })
+
+          // Ordenar por ID de transacción (más reciente primero)
+          agrupadas.sort((a, b) => b.transaccionId - a.transaccionId)
+          setVentasAgrupadas(agrupadas)
         })
 
-        // Crear array de ventas agrupadas
-        const agrupadas: VentaAgrupada[] = []
-
-        ventasPorTransaccion.forEach((productos, transaccionId) => {
-          if (productos.length > 0) {
-            // Verificar si algún producto de la transacción está marcado como entregado
-            const entregado = productos.some((p) => p.estado === "entregada")
-
-            const primerProducto = productos[0]
-            const totalTransaccion = productos.reduce((sum, venta) => sum + venta.total, 0)
-
-            // Si algún producto está entregado, marcar toda la transacción como completada
-            const estadoTransaccion = entregado ? "completada" : primerProducto.estado
-
-            agrupadas.push({
-              transaccionId,
-              cliente: primerProducto.cliente,
-              vendedor: primerProducto.vendedor,
-              fecha: primerProducto.fecha,
-              total: totalTransaccion,
-              productos,
-              direccionCliente: primerProducto.direccionCliente,
-              estado: estadoTransaccion,
-              fechaEntrega: primerProducto.fechaEntrega,
-              horarioEntrega: primerProducto.horarioEntrega,
-              repartidor: primerProducto.repartidor,
-            })
-          }
-        })
-
-        // Ordenar por ID de transacción (más reciente primero)
-        agrupadas.sort((a, b) => b.transaccionId - a.transaccionId)
-        setVentasAgrupadas(agrupadas)
+        return () => unsubscribe()
       } catch (error) {
         console.error("Error al obtener las ventas: ", error)
       }
@@ -315,27 +335,27 @@ export default function VentasPage() {
   const agregarAlCarrito = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!producto || cantidad <= 0 || !precioProducto) {
+    if (!producto || !cantidad || Number(cantidad) <= 0 || !precioProducto) {
       alert("Por favor seleccione un producto y una cantidad válida")
       return
     }
 
     // Verificar stock disponible
     const productoEncontrado = productosDisponibles.find((prod) => prod.nombre === producto)
-    if (!productoEncontrado || productoEncontrado.cantidad < cantidad) {
+    if (!productoEncontrado || productoEncontrado.cantidad < Number(cantidad)) {
       alert(`No hay suficiente stock. Stock disponible: ${productoEncontrado?.cantidad || 0}`)
       return
     }
 
     // Calcular el total
-    const total = precioProducto * cantidad
+    const total = precioProducto * Number(cantidad)
 
     // Verificar si el producto ya está en el carrito
     const itemExistente = cartItems.findIndex((item) => item.producto === producto)
 
     if (itemExistente !== -1) {
       // Actualizar cantidad si ya existe
-      const nuevaCantidad = cartItems[itemExistente].cantidad + cantidad
+      const nuevaCantidad = cartItems[itemExistente].cantidad + Number(cantidad)
 
       // Verificar que la nueva cantidad no exceda el stock
       if (nuevaCantidad > productoEncontrado.cantidad) {
@@ -357,7 +377,7 @@ export default function VentasPage() {
       // Agregar nuevo item al carrito
       const nuevoItem: CartItem = {
         producto,
-        cantidad,
+        cantidad: Number(cantidad),
         precio: precioProducto,
         total,
       }
@@ -368,7 +388,7 @@ export default function VentasPage() {
     // Limpiar el formulario
     setProducto("")
     setProductoSearch("")
-    setCantidad(0)
+    setCantidad(1) // Reiniciar a 1 en lugar de 0
     setPrecioProducto(0)
   }
 
@@ -379,26 +399,39 @@ export default function VentasPage() {
   }
 
   // Actualizar cantidad de un producto en el carrito
-  const actualizarCantidadCarrito = (index: number, nuevaCantidad: number) => {
+  const actualizarCantidadCarrito = (index: number, nuevaCantidad: number | "") => {
     const item = cartItems[index]
     const productoEncontrado = productosDisponibles.find((prod) => prod.nombre === item.producto)
 
     if (!productoEncontrado) return
 
+    // Si es string vacío, permitir temporalmente
+    if (nuevaCantidad === "") {
+      const nuevosItems = [...cartItems]
+      nuevosItems[index] = {
+        ...item,
+        cantidad: 0, // Temporalmente 0 para la interfaz
+        total: 0,
+      }
+      setCartItems(nuevosItems)
+      return
+    }
+
     // Verificar que la cantidad no sea menor a 1 ni mayor al stock disponible
+    let cantidadFinal = nuevaCantidad
     if (nuevaCantidad < 1) {
-      nuevaCantidad = 1
+      cantidadFinal = 1
     } else if (nuevaCantidad > productoEncontrado.cantidad) {
-      nuevaCantidad = productoEncontrado.cantidad
+      cantidadFinal = productoEncontrado.cantidad
       alert(`No hay suficiente stock. Stock disponible: ${productoEncontrado.cantidad}`)
     }
 
-    const nuevoTotal = item.precio * nuevaCantidad
+    const nuevoTotal = item.precio * cantidadFinal
 
     const nuevosItems = [...cartItems]
     nuevosItems[index] = {
       ...item,
-      cantidad: nuevaCantidad,
+      cantidad: cantidadFinal,
       total: nuevoTotal,
     }
 
@@ -574,9 +607,164 @@ export default function VentasPage() {
   }
 
   // Generar PDF de una venta
-  const generarPDFVenta = (venta: VentaAgrupada) => {
-    // Aquí iría la lógica para generar un PDF con los detalles de la venta
-    alert(`Generando PDF para la venta #${venta.transaccionId}`)
+  const generarPDFVenta = async (venta: VentaAgrupada) => {
+    try {
+      // Crear un nuevo documento PDF
+      const pdfDoc = await PDFDocument.create()
+      let page = pdfDoc.addPage([595.276, 841.89]) // Tamaño A4
+
+      // Configuración de fuentes
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+      // Configuración inicial
+      const fontSize = 10
+      const fontSizeSmall = 8
+      const fontSizeLarge = 14
+      const margin = 50
+      let y = page.getHeight() - margin
+
+      // Logo (puedes reemplazar con tu logo en base64)
+      // const logoImage = await pdfDoc.embedPng(logoBase64)
+      // page.drawImage(logoImage, { x: margin, y: y - 50, width: 100, height: 50 })
+
+      // Título del comprobante
+      page.drawText("COMPROBANTE DE VENTA", {
+        x: margin,
+        y,
+        size: fontSizeLarge,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      })
+      y -= 30
+
+      // Información de la empresa
+      page.drawText("Empresa: Alenort", { x: margin, y, size: fontSize, font })
+      y -= 15
+      page.drawText("Dirección: Av Juan B. Justo 1111, San Miguel de Tucumán", { x: margin, y, size: fontSize, font })
+      y -= 15
+      page.drawText("Teléfono: 381 234-1252", { x: margin, y, size: fontSize, font })
+      y -= 15
+
+      // Línea divisoria
+      page.drawLine({
+        start: { x: margin, y },
+        end: { x: page.getWidth() - margin, y },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      })
+      y -= 20
+
+      // Información del comprobante
+      page.drawText(`N° Comprobante: ${venta.transaccionId}`, { x: margin, y, size: fontSize, font: boldFont })
+      page.drawText(`Fecha: ${venta.fecha}`, { x: 300, y, size: fontSize, font: boldFont })
+      y -= 20
+
+      // Información del cliente
+      page.drawText("Cliente:", { x: margin, y, size: fontSize, font: boldFont })
+      y -= 15
+      page.drawText(`Nombre: ${venta.cliente}`, { x: margin + 20, y, size: fontSize, font })
+      y -= 15
+      page.drawText(`Dirección: ${venta.direccionCliente || "No especificada"}`, {
+        x: margin + 20,
+        y,
+        size: fontSize,
+        font,
+      })
+      y -= 20
+
+      // Información del vendedor
+      page.drawText(`Vendedor: ${venta.vendedor}`, { x: margin, y, size: fontSize, font: boldFont })
+      y -= 30
+
+      // Tabla de productos
+      // Encabezado de la tabla
+      page.drawText("Producto", { x: margin, y, size: fontSize, font: boldFont })
+      page.drawText("Cantidad", { x: margin + 250, y, size: fontSize, font: boldFont })
+      page.drawText("Precio Unit.", { x: margin + 350, y, size: fontSize, font: boldFont })
+      page.drawText("Total", { x: margin + 450, y, size: fontSize, font: boldFont })
+      y -= 20
+
+      // Línea divisoria
+      page.drawLine({
+        start: { x: margin, y },
+        end: { x: page.getWidth() - margin, y },
+        thickness: 0.5,
+        color: rgb(0, 0, 0),
+      })
+      y -= 15
+
+      // Productos
+      venta.productos.forEach((producto) => {
+        if (y < 100) {
+          // Si nos quedamos sin espacio, agregamos nueva página
+          const newPage = pdfDoc.addPage([595.276, 841.89])
+          page = newPage
+          y = page.getHeight() - margin
+        }
+
+        page.drawText(producto.producto, { x: margin, y, size: fontSize, font })
+        page.drawText(producto.cantidad.toString(), { x: margin + 250, y, size: fontSize, font })
+        page.drawText(`$${producto.precio.toFixed(2)}`, { x: margin + 350, y, size: fontSize, font })
+        page.drawText(`$${producto.total.toFixed(2)}`, { x: margin + 450, y, size: fontSize, font })
+        y -= 15
+      })
+
+      // Línea divisoria final
+      y -= 10
+      page.drawLine({
+        start: { x: margin, y },
+        end: { x: page.getWidth() - margin, y },
+        thickness: 0.5,
+        color: rgb(0, 0, 0),
+      })
+      y -= 20
+
+      // Totales
+      page.drawText("Total:", { x: margin + 350, y, size: fontSize, font: boldFont })
+      page.drawText(`$${venta.total.toFixed(2)}`, { x: margin + 450, y, size: fontSize, font: boldFont })
+      y -= 30
+
+      // Estado
+      page.drawText(`Estado: ${venta.estado === "completada" ? "COMPLETADA" : "PENDIENTE"}`, {
+        x: margin,
+        y,
+        size: fontSize,
+        font: boldFont,
+        color: venta.estado === "completada" ? rgb(0, 0.5, 0) : rgb(0.8, 0.5, 0),
+      })
+      y -= 30
+
+      // Pie de página
+      page.drawText("Gracias por su compra!", {
+        x: margin,
+        y,
+        size: fontSize,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      })
+      y -= 15
+      page.drawText("Este comprobante no es válido como factura", {
+        x: margin,
+        y,
+        size: fontSizeSmall,
+        font,
+        color: rgb(0.5, 0.5, 0.5),
+      })
+
+      // Guardar y descargar
+      const pdfBytes = await pdfDoc.save()
+      const blob = new Blob([pdfBytes], { type: "application/pdf" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `Comprobante_Venta_${venta.transaccionId}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Error al generar el PDF:", error)
+      alert("Error al generar el comprobante en PDF")
+    }
   }
 
   // Filtrar clientes según la búsqueda
@@ -797,7 +985,10 @@ export default function VentasPage() {
                     type="number"
                     id="cantidad"
                     value={cantidad}
-                    onChange={(e) => setCantidad(Number(e.target.value))}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setCantidad(value === "" ? "" : Number(value))
+                    }}
                     min={1}
                     max={producto && productosDisponibles.find((prod) => prod.nombre === producto)?.cantidad}
                     required
@@ -878,24 +1069,18 @@ export default function VentasPage() {
                       <TableRow key={index}>
                         <TableCell className="font-medium">{item.producto}</TableCell>
                         <TableCell>
-                          <div className="flex items-center justify-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => actualizarCantidadCarrito(index, item.cantidad - 1)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="w-8 text-center">{item.cantidad}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => actualizarCantidadCarrito(index, item.cantidad + 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
+                          <div className="flex items-center justify-center">
+                            <Input
+                              type="number"
+                              value={item.cantidad}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                actualizarCantidadCarrito(index, value === "" ? "" : Number(value))
+                              }}
+                              min={1}
+                              max={productosDisponibles.find((prod) => prod.nombre === item.producto)?.cantidad || 999}
+                              className="w-20 text-center"
+                            />
                           </div>
                         </TableCell>
                         <TableCell className="text-right">${item.precio}</TableCell>
@@ -980,24 +1165,24 @@ export default function VentasPage() {
                       <TableCell className="text-center">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            venta.estado === "completada" || venta.estado === "entregada"
+                            venta.estado === ESTADOS.COMPLETADA
                               ? "bg-green-100 text-green-800"
-                              : venta.estado === "pendiente_programacion"
+                              : venta.estado === ESTADOS.PENDIENTE_PROGRAMACION
                                 ? "bg-amber-100 text-amber-800"
-                                : venta.estado === "programada"
+                                : venta.estado === ESTADOS.PROGRAMADA
                                   ? "bg-blue-100 text-blue-800"
-                                  : venta.estado === "en_reparto"
+                                  : venta.estado === ESTADOS.EN_REPARTO
                                     ? "bg-blue-100 text-blue-800"
                                     : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {venta.estado === "completada" || venta.estado === "entregada"
+                          {venta.estado === ESTADOS.COMPLETADA
                             ? "Completada"
-                            : venta.estado === "pendiente_programacion"
+                            : venta.estado === ESTADOS.PENDIENTE_PROGRAMACION
                               ? "Pendiente de programación"
-                              : venta.estado === "programada"
+                              : venta.estado === ESTADOS.PROGRAMADA
                                 ? "Programada"
-                                : venta.estado === "en_reparto"
+                                : venta.estado === ESTADOS.EN_REPARTO
                                   ? "En reparto"
                                   : "Pendiente"}
                         </span>

@@ -28,23 +28,27 @@ type Role = "ADMIN" | "EncargadoClientes" | "Logistica"
 const sidebarItems: Record<Role, { href: string; icon: React.ElementType; label: string }[]> = {
   ADMIN: [
     { href: "/dashboard", icon: BarChart2, label: "Dashboard" },
-    { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
+  
     { href: "/clientes", icon: Users, label: "Clientes" },
+    { href: "/ventas", icon: ClipboardList, label: "Ventas" },
+    { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
     { href: "/repartos", icon: Truck, label: "Repartos" },
     { href: "/productos", icon: Package, label: "Productos" },
-    { href: "/ventas", icon: ClipboardList, label: "Ventas" },
     { href: "/inventario", icon: Package, label: "Inventario" },
+    
+    
   ],
   EncargadoClientes: [
     { href: "/clientes", icon: Users, label: "Clientes" },
     { href: "/productos", icon: Package, label: "Productos" },
-    { href: "/ventas", icon: ClipboardList, label: "Ventas" },
     { href: "/inventario", icon: Package, label: "Inventario" },
+    { href: "/ventas", icon: ClipboardList, label: "Ventas" },
+    
   ],
   Logistica: [
     { href: "/clientes", icon: Users, label: "Clientes" },
-    { href: "/repartos", icon: Truck, label: "Repartos" },
     { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
+    { href: "/repartos", icon: Truck, label: "Repartos" },
   ],
 }
 
