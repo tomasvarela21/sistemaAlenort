@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { db } from "@/lib/firebaseConfig"
-import { collection, getDocs } from "firebase/firestore"
+import { collection, doc, getDoc, getDocs } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { PackageOpen, Warehouse } from "lucide-react"
@@ -27,6 +27,17 @@ interface Producto {
   cantidad: number
   imagenUrl: string
   categoria: string
+  stockThresholds?: {
+    low: number
+    medium: number
+    high: number
+  }
+}
+
+interface StockSettings {
+  lowThreshold: number
+  mediumThreshold: number
+  highThreshold: number
 }
 
 export default function InventarioPage() {
@@ -36,8 +47,29 @@ export default function InventarioPage() {
   const [busqueda, setBusqueda] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [stockSettings, setStockSettings] = useState<StockSettings>({
+    lowThreshold: 5,
+    mediumThreshold: 15,
+    highThreshold: 25,
+  })
 
-  // Cargar productos desde Firestore
+  // Load stock settings from Firebase (igual que en ProductosPage)
+  useEffect(() => {
+    const loadStockSettings = async () => {
+      try {
+        const docRef = doc(db, "settings", "stockThresholds")
+        const docSnap = await getDoc(docRef)
+        if (docSnap.exists()) {
+          setStockSettings(docSnap.data() as StockSettings)
+        }
+      } catch (error) {
+        console.error("Error loading stock settings:", error)
+      }
+    }
+    loadStockSettings()
+  }, [])
+
+  // Cargar productos desde Firestore (incluyendo stockThresholds)
   useEffect(() => {
     const obtenerProductos = async () => {
       try {
@@ -55,6 +87,7 @@ export default function InventarioPage() {
             cantidad: data.cantidad || 0,
             imagenUrl: data.imagenUrl || "",
             categoria: data.categoria || "otros productos",
+            stockThresholds: data.stockThresholds, // Incluimos los umbrales
           } as Producto
 
           productosObtenidos.push(producto)
@@ -84,11 +117,28 @@ export default function InventarioPage() {
     setProductosFiltrados(filtrados)
   }, [categoriaActiva, productos, busqueda])
 
-  // Función para obtener el color según el nivel de stock
-  const getStockColor = (cantidad: number) => {
-    if (cantidad <= 5) return "text-red-600 bg-red-100"
-    if (cantidad <= 15) return "text-yellow-600 bg-yellow-100"
-    return "text-green-600 bg-green-100"
+  // Function to get stock level color (copiado de ProductosPage)
+  const getStockLevelColor = (cantidad: number, thresholds?: { low: number; medium: number; high: number }) => {
+    const low = thresholds?.low || stockSettings.lowThreshold
+    const medium = thresholds?.medium || stockSettings.mediumThreshold
+    const high = thresholds?.high || stockSettings.highThreshold
+
+    if (cantidad <= low) return "bg-red-100 text-red-700"
+    if (cantidad <= medium) return "bg-yellow-100 text-yellow-700"
+    if (cantidad > high) return "bg-green-100 text-green-700"
+    return "bg-blue-100 text-blue-700"
+  }
+
+  // Function to get stock level text (copiado de ProductosPage)
+  const getStockLevelText = (cantidad: number, thresholds?: { low: number; medium: number; high: number }) => {
+    const low = thresholds?.low || stockSettings.lowThreshold
+    const medium = thresholds?.medium || stockSettings.mediumThreshold
+    const high = thresholds?.high || stockSettings.highThreshold
+
+    if (cantidad <= low) return "Stock Bajo"
+    if (cantidad <= medium) return "Stock Medio"
+    if (cantidad > high) return "Stock Alto"
+    return "Stock Normal"
   }
 
   if (error) {
@@ -191,9 +241,14 @@ export default function InventarioPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStockColor(producto.cantidad)}`}>
-                      {producto.cantidad} unidades
-                    </span>
+                    <div
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStockLevelColor(
+                        producto.cantidad,
+                        producto.stockThresholds
+                      )}`}
+                    >
+                      {getStockLevelText(producto.cantidad, producto.stockThresholds)}: {producto.cantidad}
+                    </div>
                     <span className="text-sm font-semibold text-primary">${producto.precio}</span>
                   </div>
                 </div>
