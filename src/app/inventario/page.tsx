@@ -11,9 +11,9 @@ import Image from "next/image"
 
 // Eliminamos las importaciones de imágenes y usamos rutas directas a la carpeta public
 const CATEGORIAS = [
-  { id: "rebosados", nombre: "Rebosados", imagen: "/images/inventario/rebosados.jpg" },
+  { id: "rebosados", nombre: "Rebosados", imagen: "/images/inventario/rebosados.JPG" },
   { id: "pollo", nombre: "Pollo", imagen: "/images/inventario/pollo.jpg" },
-  { id: "pescado", nombre: "Pescado", imagen: "/images/inventario/pescado.jpg" },
+  { id: "pescado", nombre: "Pescado", imagen: "/images/inventario/pescado.JPG" },
   { id: "mariscos", nombre: "Mariscos", imagen: "/images/inventario/mariscos.jpg" },
   { id: "papas", nombre: "Papas", imagen: "/images/inventario/papas.jpg" },
   { id: "otros productos", nombre: "Otros Productos", imagen: "/images/inventario/otros.jpg" },
